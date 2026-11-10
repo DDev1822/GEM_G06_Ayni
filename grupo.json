@@ -1,0 +1,10 @@
+{
+  "grupo": "G06",
+  "operacion": "Ayni Copper",
+  "fecha_laboratorio": "2026-11-11",
+  "individual_sha256": "b58279cc98a421984f52a49d626f4f61c76b21dae042b2d9cb125a32889830cc",
+  "grupal_sha256": "1bbe3cd8111f5595bb39be9d2c5ca66f60d4838341c1a5dfe10b071c5a607232",
+  "repo_url": "https://github.com/DDev1822/GEM_G06_Ayni.git",
+  "rama_base": "main",
+  "estado_modelos": "D08/D09 sintéticos propuestos; sin ratificación DD"
+}

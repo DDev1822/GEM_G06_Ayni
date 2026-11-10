@@ -1,0 +1,26 @@
+{
+  "grupo": "G06",
+  "operacion": "Ayni Copper",
+  "zip_fuente": "GEM_S04_6_Visualizadores_Alternativas_v0.4.1_DOCENTE.zip",
+  "zip_sha256": "8d7cd6e629d8b01c233a7b3fe040cac02a0f4822c9f1a40e0064653f6052298b",
+  "html_fuente": "GEM_S04_G06_Ayni_Copper_Alternativas_v0.4.1.html",
+  "html_s04_sha256": "877f9848653cb201aefa9f3ab24f06b079485bb6ae1ea581d284f5a2f704dd41",
+  "html_s11_original_sha256": "618ec97549b3a3d8fed1b878043de9c131ecf5c7a94a26031ec9989d59fab78e",
+  "base_del_motor_s04": {
+    "group": "G06",
+    "days": 30,
+    "processed_t_month": 903297,
+    "processed_tpd": 30109.9,
+    "crushed_t_month": 907807,
+    "head_grade_fraction": 0.0067535889305697155,
+    "recovery_fraction": 0.9150494357741323,
+    "recovery_target_fraction": 0.915,
+    "plant_target_tpd": 30000,
+    "min_design_tpd": 32000.0,
+    "opex_kusd_month": 23740.0188581,
+    "processing_variable_kusd_month": 9378.932751,
+    "crushed_buffer_start_t": 55000.0,
+    "crushed_buffer_capacity_t": 180000.0,
+    "source": "D01–D03 oficiales, S04; escenarios A/B/C hipotéticos y editables"
+  }
+}
