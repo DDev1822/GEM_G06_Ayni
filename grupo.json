@@ -6,5 +6,7 @@
   "grupal_sha256": "1bbe3cd8111f5595bb39be9d2c5ca66f60d4838341c1a5dfe10b071c5a607232",
   "repo_url": "https://github.com/DDev1822/GEM_G06_Ayni.git",
   "rama_base": "main",
-  "estado_modelos": "D08/D09 sintéticos propuestos; sin ratificación DD"
+  "estado_modelos": "D08/D09 sintéticos propuestos; sin ratificación DD",
+  "historico_sha256": "6bb2834ddc308748b29c7d9ed305499f6410164ba1b4ce1d0e505f5f9ac2bce3",
+  "historico_t2_sha256": "5b0f53bb472da372d05eea7f08094475c8fceae578bcdc29faabf9d4c84de3de"
 }

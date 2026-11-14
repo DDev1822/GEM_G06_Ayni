@@ -14,6 +14,8 @@ import xml.etree.ElementTree as ET
 
 from lab01_common_v2 import (_alias, _config, _read_json, _sha, _sheet_paths,
                              _write_json, XML_MAIN, workbook_values)
+from aplicabilidad_historica_cm03 import (EXPLANATION, STAGES_NO_APLICA,
+    apply_historical_policy, is_no_aplica, validate_no_aplica)
 
 
 INDIVIDUAL = "GEM_KAI_LAB01_Plantilla_Individual_v2.xlsx"
@@ -30,9 +32,13 @@ STATUS_CELL = {"pendiente": "NO INICIADO", "en_curso": "EN CURSO",
                "no_disponible": "NO VERIFICADO"}
 
 
-def edit_copy(path: Path, changes: dict[str, dict[str, str]]) -> None:
+def edit_copy(path: Path, changes: dict[str, dict[str, str]], *,
+              no_aplica_cells: tuple[str, ...] = ()) -> None:
     """Actualiza celdas existentes; preserva las demás partes y fórmulas OOXML."""
     temp = path.with_suffix(".xlsx.tmp")
+    if no_aplica_cells and (set(no_aplica_cells) != {"E19", "E20"}
+                             or set(changes) != {"01_DATOS_DEL_VISOR"}):
+        raise ValueError("CM-03 solo amplía las listas de estado E19/E20 de la copia individual")
     with zipfile.ZipFile(path) as source:
         paths = _sheet_paths(source)
         updated = {}
@@ -64,6 +70,25 @@ def edit_copy(path: Path, changes: dict[str, dict[str, str]]) -> None:
                     text.text = value
                     if value != value.strip():
                         text.attrib["{http://www.w3.org/XML/1998/namespace}space"] = "preserve"
+            for address in no_aplica_cells:
+                validations = [n for n in root.iter(f"{{{XML_MAIN}}}dataValidation")
+                               if n.attrib.get("sqref") == address]
+                if len(validations) != 1 or validations[0].attrib.get("type") != "list":
+                    raise ValueError(f"No consta la lista individual de estado de {address}")
+                formula = validations[0].find(f"{{{XML_MAIN}}}formula1")
+                if formula is None or not formula.text or not formula.text.startswith('"') or not formula.text.endswith('"'):
+                    raise ValueError("Lista de estado CM-03 incompatible")
+                choices = formula.text[1:-1].split(",")
+                if "NO APLICA" not in choices:
+                    formula.text = '"' + ",".join(choices + ["NO APLICA"]) + '"'
+                row_number = address[1:]
+                # La fuente documental se lee completa en la copia individual.
+                # Reutilizar el estilo negro con ajuste de la etiqueta B evita
+                # crear estilos o cambiar colores/anchos de la plantilla.
+                cells[f"F{row_number}"].attrib["s"] = cells[f"B{row_number}"].attrib["s"]
+                row_node = next(n for n in root.iter(f"{{{XML_MAIN}}}row")
+                                if n.attrib["r"] == row_number)
+                row_node.attrib.update({"ht": "110", "customHeight": "1"})
             updated[sheet_path] = ET.tostring(root, encoding="utf-8", xml_declaration=True)
         with zipfile.ZipFile(temp, "x") as target:
             for item in source.infolist():
@@ -86,7 +111,8 @@ def edit_copy(path: Path, changes: dict[str, dict[str, str]]) -> None:
 
 
 def _first_pending(state: dict) -> str:
-    return next((stage for stage in STAGES if state["etapas"][stage] not in DONE), "terminado")
+    return next((stage for stage in STAGES if state["etapas"][stage] not in DONE
+                 and not is_no_aplica(state, stage)), "terminado")
 
 
 def start(root: Path, alias: str) -> Path:
@@ -102,6 +128,7 @@ def start(root: Path, alias: str) -> Path:
             raise ValueError("La ficha existente no coincide con grupo y alias")
         if not (base / state["excel"]).is_file():
             raise FileNotFoundError("La ficha existe, pero falta el XLSX individual")
+        apply_historical_policy(root, base, edit_copy)
         return base
     archived = root / "cierre" / SESSION_DATE / "individuales" / f"ficha_{alias}.json"
     if archived.is_file() and not base.exists():
@@ -116,6 +143,7 @@ def start(root: Path, alias: str) -> Path:
         shutil.copyfile(archived, base / "progreso.json")
         if review(base)["identidad_excel"] != "coincide":
             raise ValueError("La identidad del Excel recuperado no coincide")
+        apply_historical_policy(root, base, edit_copy)
         return base
     if base.exists() and any(base.iterdir()):
         raise FileExistsError("Ya hay archivos en la sesión; se requiere revisión manual")
@@ -147,6 +175,8 @@ def record(root: Path, session: Path, stage: str, status: str,
         raise ValueError("Sesión fuera del paquete grupal")
     state_path = session / "progreso.json"
     state = _read_json(state_path)
+    if stage in STAGES_NO_APLICA:
+        raise ValueError("CM-03: los indicadores 13/14 son NO APLICA documental; usa reanudar, sin respuesta del alumno")
     if state.get("version") != 2 or state["grupo"] != config["grupo"]:
         raise ValueError("Ficha de otro grupo o versión")
     if stage not in STAGES or status not in ("pendiente", "en_curso", "requiere_refuerzo", "comprendido", "no_disponible"):
@@ -195,6 +225,7 @@ def record(root: Path, session: Path, stage: str, status: str,
         state["dificultades"][stage] = missing
     state["proxima_actividad"] = _first_pending(state)
     _write_json(state_path, state)
+    apply_historical_policy(root, session, edit_copy)
     return _read_json(state_path)
 
 
@@ -203,6 +234,7 @@ def review(session: Path) -> dict:
     excel = session / state["excel"]
     if not excel.is_file():
         raise FileNotFoundError("Falta el XLSX individual")
+    not_applicable = validate_no_aplica(state, excel)
     cells = workbook_values(excel, {
         "00_MI_RUTA": ["C5", "C6", "C7", "C8"],
         "01_DATOS_DEL_VISOR": [f"D{i}" for i in range(7, 21)] + [f"E{i}" for i in range(7, 21)],
@@ -214,14 +246,30 @@ def review(session: Path) -> dict:
                              "C7": state["operacion"], "C8": state["fecha"]})
     return {"grupo": state["grupo"], "alias": state["alias"], "fecha": state["fecha"],
             "identidad_excel": "coincide" if identity_ok else "incorrecta",
-            "indicadores_con_valor": sum(bool(cells["01_DATOS_DEL_VISOR"][f"D{i}"]) for i in range(7, 21)),
+            "indicadores_con_valor": sum(bool(cells["01_DATOS_DEL_VISOR"][f"D{i}"]) for i in range(7, 19)),
             "indicadores_no_disponibles": sum(cells["01_DATOS_DEL_VISOR"][f"E{i}"] == "NO DISPONIBLE"
-                                               for i in range(7, 21)),
+                                               for i in range(7, 19)),
+            "indicadores_evaluables": 12,
+            "indicadores_no_aplica": not_applicable,
             "preguntas_con_respuesta": sum(bool(cells["03_SEIS_PREGUNTAS"][f"D{i}"])
                                            for i in range(7, 13)),
             "decision_escrita": bool(cells["04_MI_DECISION"]["C26"]),
-            "proxima_actividad": state["proxima_actividad"],
+            "proxima_actividad": _first_pending(state),
             "limite": "Presencia documental; la comprensión y calificación requieren al profesor."}
+
+
+def resume(root: Path, alias: str) -> dict:
+    """Reanuda o recupera una ficha existente y regulariza el hecho histórico."""
+    alias = _alias(alias)
+    if not ((root / "trabajos" / alias / SESSION_DATE / "progreso.json").is_file()
+            or (root / "cierre" / SESSION_DATE / "individuales" / f"ficha_{alias}.json").is_file()):
+        raise FileNotFoundError("No existe una ficha para reanudar; usa iniciar para una ficha nueva")
+    session = start(root, alias)
+    result = review(session)
+    if result["indicadores_no_aplica"]:
+        result["hecho_historico_cm03"] = EXPLANATION
+        result["respuesta_estudiante_requerida_para_no_aplica"] = False
+    return result
 
 
 def panel(roots: list[Path], output: Path) -> dict:
@@ -237,18 +285,19 @@ def panel(roots: list[Path], output: Path) -> dict:
                 rows.append((state, result))
         except (OSError, KeyError, ValueError, json.JSONDecodeError, zipfile.BadZipFile) as exc:
             warnings.append(f"{root}: {exc}")
-    columns = ("Grupo", "Alias", "Fecha", "XLSX", "KPI con valor", "KPI no disponibles",
+    columns = ("Grupo", "Alias", "Fecha", "XLSX", "KPI con valor", "KPI no disponibles", "KPI no aplicables",
                "Preguntas escritas", "Decisión", "Siguiente", "Dificultades", "Kai")
     body = []
     for state, result in rows:
         kai = "; ".join(f"{key}: {value}" for key, value in state["observaciones_kai"].items()
                         if value != "sin observar")
         fields = (state["grupo"], state["alias"], state["fecha"], result["identidad_excel"],
-                  f"{result['indicadores_con_valor']}/14", result["indicadores_no_disponibles"],
+                  f"{result['indicadores_con_valor']}/{result['indicadores_evaluables']}", result["indicadores_no_disponibles"],
+                  result["indicadores_no_aplica"],
                   f"{result['preguntas_con_respuesta']}/6", "Sí" if result["decision_escrita"] else "No",
                   result["proxima_actividad"], "; ".join(state["dificultades"].values()) or "—", kai or "—")
         body.append("<tr>" + "".join(f"<td>{html.escape(str(v))}</td>" for v in fields) + "</tr>")
-    table = "<table><thead><tr>" + "".join(f"<th>{html.escape(c)}</th>" for c in columns) + "</tr></thead><tbody>" + ("".join(body) or '<tr><td colspan="11">Sin sesiones registradas.</td></tr>') + "</tbody></table>"
+    table = "<table><thead><tr>" + "".join(f"<th>{html.escape(c)}</th>" for c in columns) + "</tr></thead><tbody>" + ("".join(body) or '<tr><td colspan="12">Sin sesiones registradas.</td></tr>') + "</tbody></table>"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("<!doctype html><html lang='es'><meta charset='utf-8'><title>Laboratorio 01 · Docente</title>"
                       "<style>body{font:15px system-ui;margin:2rem;color:#183047;background:#f4f7f8}table{border-collapse:collapse;background:white;width:100%}th,td{border:1px solid #d6e2e5;padding:.6rem;text-align:left;vertical-align:top}th{background:#17394d;color:white}</style>"
@@ -262,6 +311,7 @@ def main() -> int:
     p.add_argument("--raiz", type=Path, default=Path(__file__).resolve().parents[2])
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("iniciar").add_argument("--alias", required=True)
+    sub.add_parser("reanudar").add_argument("--alias", required=True)
     upd = sub.add_parser("registrar")
     upd.add_argument("--sesion", type=Path, required=True)
     upd.add_argument("--etapa", choices=STAGES, required=True)
@@ -279,6 +329,8 @@ def main() -> int:
         root = args.raiz.resolve()
         if args.cmd == "iniciar":
             print(start(root, args.alias))
+        elif args.cmd == "reanudar":
+            print(json.dumps(resume(root, args.alias), ensure_ascii=False, indent=2))
         elif args.cmd == "registrar":
             print(json.dumps(record(root, args.sesion, args.etapa, args.estado, args.respuesta,
                                     args.explicacion, args.falta, args.confirmado), ensure_ascii=False, indent=2))

@@ -19,6 +19,7 @@ from tempfile import TemporaryDirectory
 
 from lab01_common_v2 import _alias, _config, _read_json, _sha, _sheet_paths, OPERATIONS, XML_MAIN, workbook_values
 from kai_lab01_v2 import GROUP, INDIVIDUAL, SESSION_DATE, edit_copy
+from aplicabilidad_historica_cm03 import POLICY, POLICY_SHA256, validate_no_aplica
 
 
 def _run(args: list[str], root: Path) -> str:
@@ -63,6 +64,7 @@ def _validate_student(root: Path, state: dict, book: Path) -> str:
     vals = workbook_values(book, {"00_MI_RUTA": ["C5", "C6", "C7", "C8"]})["00_MI_RUTA"]
     if vals != {"C5": alias, "C6": config["grupo"], "C7": config["operacion"], "C8": SESSION_DATE}:
         raise ValueError("Identidad del Excel individual incorrecta")
+    validate_no_aplica(state, book)
     return alias
 
 
@@ -83,6 +85,7 @@ def export_student(root: Path, alias: str, output: Path) -> Path:
                "alias": alias, "fecha": SESSION_DATE, "excel": book.name,
                "sha256": {book.name: _sha(book), "progreso.json": _sha(state_path)},
                "nota": "Respuesta académica no aprobada automáticamente."}
+    receipt["indicadores_no_aplica"] = validate_no_aplica(state, book)
     with zipfile.ZipFile(output, "x", zipfile.ZIP_DEFLATED, compresslevel=7) as archive:
         archive.write(book, book.name)
         archive.write(state_path, "progreso.json")
@@ -136,6 +139,16 @@ def import_student(root: Path, source: Path) -> dict:
             "sesion": str(dest)}
 
 
+def _documentary_source(root: Path, closure: Path) -> None:
+    if _sha(root / POLICY) != POLICY_SHA256:
+        raise ValueError("Fuente CM-03 divergente; no se acredita el cierre documental")
+    target = closure / "CM03_HECHO_HISTORICO.md"
+    if target.exists() and _sha(target) != POLICY_SHA256:
+        raise ValueError("El cierre contiene otra fuente CM-03; no se sobrescribe")
+    if not target.exists():
+        shutil.copyfile(root / POLICY, target)
+
+
 def incorporate(root: Path) -> dict:
     """Añade estudiantes recién importados a un cierre preparado, sin sobrescribir."""
     config = _config(root)
@@ -143,6 +156,7 @@ def incorporate(root: Path) -> dict:
     target = closure / "individuales"
     if not target.is_dir():
         raise FileNotFoundError("Primero prepara el cierre grupal")
+    _documentary_source(root, closure)
     added = []
     for state_path in sorted((root / "trabajos").glob(f"*/{SESSION_DATE}/progreso.json")):
         state = _read_json(state_path)
@@ -166,6 +180,8 @@ def prepare(root: Path) -> Path:
     template = root / "plantilla" / GROUP
     if not template.is_file() or _sha(template) != config.get("grupal_sha256"):
         raise ValueError("La plantilla grupal v2 no coincide con el maestro de DD")
+    if _sha(root / POLICY) != POLICY_SHA256:
+        raise ValueError("Fuente CM-03 divergente; no se acredita el cierre documental")
     closure = root / "cierre" / SESSION_DATE
     if closure.exists():
         raise FileExistsError("Ya existe el cierre de esta sesión; no se sobrescribe")
@@ -176,6 +192,7 @@ def prepare(root: Path) -> Path:
     shutil.copyfile(template, group_book)
     edit_copy(group_book, {"00_EQUIPO": {"D5": config["grupo"], "D6": config["operacion"],
                                           "D7": SESSION_DATE}})
+    _documentary_source(root, closure)
     incorporate(root)
     (closure / "LEEME_CIERRE.md").write_text(
         "# Cierre grupal · Laboratorio 01\n\n"
@@ -240,6 +257,7 @@ def verify(root: Path, *, strict: bool = True) -> dict:
     if not individuals:
         missing.append("No hay Excel individuales")
     aliases = set()
+    not_applicable_by_alias = {}
     for book in individuals:
         _integrity(book, master_ind, ["00_MI_RUTA", "01_DATOS_DEL_VISOR", "02_BASE_Y_ABC",
                                       "03_SEIS_PREGUNTAS", "04_MI_DECISION", "05_KAI_SEGUIMIENTO",
@@ -261,11 +279,16 @@ def verify(root: Path, *, strict: bool = True) -> dict:
             state = _read_json(archived)
             if state.get("grupo") != group or state.get("alias") != identity["C5"] or state.get("excel") != book.name:
                 raise ValueError(f"Ficha individual no corresponde al Excel: {book.name}")
+            not_applicable_by_alias[identity["C5"]] = validate_no_aplica(state, book)
         answer_count = sum(bool(value) for value in values["03_SEIS_PREGUNTAS"].values())
         if answer_count < 6:
             missing.append(f"{identity['C5']}: faltan {6-answer_count}/6 respuestas individuales")
         if not values["04_MI_DECISION"]["C26"]:
             missing.append(f"{identity['C5']}: falta decisión individual")
+    if any(not_applicable_by_alias.values()):
+        documentary = closure / "CM03_HECHO_HISTORICO.md"
+        if not documentary.is_file() or _sha(documentary) != POLICY_SHA256:
+            raise ValueError("Falta la fuente CM-03 íntegra del cierre con NO APLICA")
     evidence = {}
     for folder, suffixes in (("manuscrito", (".pdf", ".png", ".jpg", ".jpeg")),
                              ("retroalimentacion", (".md", ".txt", ".pdf")),
@@ -279,6 +302,7 @@ def verify(root: Path, *, strict: bool = True) -> dict:
               "decision": "escrita" if all(decision.values()) else "incompleta",
               "archivos_evidencia": evidence, "estado_documental": "COMPLETA" if not missing else "INCOMPLETA",
               "pendientes": missing,
+              "indicadores_no_aplica_por_alias": not_applicable_by_alias,
               "revision_humana": "Pendiente: legibilidad, participación y rigor de respuestas manuscritas."}
     if strict and missing:
         raise ValueError("; ".join(missing[:8]))
@@ -350,6 +374,7 @@ def make_zip(root: Path, output: Path) -> Path:
                "operacion": config["operacion"], "fecha": SESSION_DATE,
                "estado_documental": result["estado_documental"],
                "pendientes": result["pendientes"], "control": result["revision_humana"],
+               "indicadores_no_aplica_por_alias": result["indicadores_no_aplica_por_alias"],
                "git": _local_commit_receipt(root), "push": "NO_VERIFICADO"}
     with zipfile.ZipFile(output, "x", zipfile.ZIP_DEFLATED, compresslevel=7) as archive:
         for path in sorted(p for p in closure.rglob("*") if p.is_file()):
