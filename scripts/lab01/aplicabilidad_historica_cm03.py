@@ -127,7 +127,7 @@ def apply_historical_policy(root: Path, session: Path, writer) -> dict:
     session = session.resolve()
     if root.resolve() not in session.parents or "trabajos" not in session.parts:
         raise ValueError("Sesión CM-03 fuera del paquete")
-    if _sha(root / POLICY) != POLICY_SHA256:
+    if sha256((root / POLICY).read_bytes().replace(b"\r\n", b"\n")).hexdigest() != POLICY_SHA256:
         raise ValueError("La fuente documental CM-03 cambió; no se aplica la política")
     recovered = _recover(root, session)
     state = _read_json(session / "progreso.json")

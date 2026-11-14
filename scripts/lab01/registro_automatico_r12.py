@@ -99,7 +99,9 @@ def historical_records(root: Path) -> dict[str, dict]:
     config = _config(root)
     path = root / "datos" / f"{config['grupo']}_RESULTADOS_HISTORICOS.json"
     raw = path.read_bytes()
-    if sha256(raw).hexdigest() != config.get("historico_sha256"):
+    # El SHA-256 histórico fue fijado sobre CRLF; Git puede entregar LF.
+    canonico = raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+    if sha256(canonico).hexdigest() != config.get("historico_sha256"):
         raise ValueError("La fuente histórica cambió respecto del anclaje del grupo")
     data = json.loads(raw)
     if (data.get("grupo"), data.get("operacion"), data.get("excel_t2_sha256")) != (

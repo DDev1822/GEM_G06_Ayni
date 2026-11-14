@@ -139,11 +139,15 @@ def import_student(root: Path, source: Path) -> dict:
             "sesion": str(dest)}
 
 
+def _policy_sha(path: Path) -> str:
+    """SHA documental estable ante la conversión LF/CRLF de Git."""
+    return sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
 def _documentary_source(root: Path, closure: Path) -> None:
-    if _sha(root / POLICY) != POLICY_SHA256:
+    if _policy_sha(root / POLICY) != POLICY_SHA256:
         raise ValueError("Fuente CM-03 divergente; no se acredita el cierre documental")
     target = closure / "CM03_HECHO_HISTORICO.md"
-    if target.exists() and _sha(target) != POLICY_SHA256:
+    if target.exists() and _policy_sha(target) != POLICY_SHA256:
         raise ValueError("El cierre contiene otra fuente CM-03; no se sobrescribe")
     if not target.exists():
         shutil.copyfile(root / POLICY, target)
@@ -180,7 +184,7 @@ def prepare(root: Path) -> Path:
     template = root / "plantilla" / GROUP
     if not template.is_file() or _sha(template) != config.get("grupal_sha256"):
         raise ValueError("La plantilla grupal v2 no coincide con el maestro de DD")
-    if _sha(root / POLICY) != POLICY_SHA256:
+    if _policy_sha(root / POLICY) != POLICY_SHA256:
         raise ValueError("Fuente CM-03 divergente; no se acredita el cierre documental")
     closure = root / "cierre" / SESSION_DATE
     if closure.exists():
@@ -287,7 +291,7 @@ def verify(root: Path, *, strict: bool = True) -> dict:
             missing.append(f"{identity['C5']}: falta decisión individual")
     if any(not_applicable_by_alias.values()):
         documentary = closure / "CM03_HECHO_HISTORICO.md"
-        if not documentary.is_file() or _sha(documentary) != POLICY_SHA256:
+        if not documentary.is_file() or _policy_sha(documentary) != POLICY_SHA256:
             raise ValueError("Falta la fuente CM-03 íntegra del cierre con NO APLICA")
     evidence = {}
     for folder, suffixes in (("manuscrito", (".pdf", ".png", ".jpg", ".jpeg")),
