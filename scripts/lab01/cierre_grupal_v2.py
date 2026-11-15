@@ -38,7 +38,7 @@ def _repo(root: Path, config: dict) -> tuple[str, str]:
     origin = _run(["git", "remote", "get-url", "origin"], root)
     normal = lambda value: value.rstrip("/").removesuffix(".git")
     if normal(origin) != normal(url) or "Gestion_Empresas_Mineras_Repo" in origin:
-        raise ValueError("origin no coincide con el repositorio privado del grupo o es el maestro")
+        raise ValueError("origin no coincide con el repositorio original del grupo o es el maestro")
     current = _run(["git", "branch", "--show-current"], root)
     if current != branch:
         raise ValueError(f"La rama activa {current} no coincide con rama_base={branch}")
@@ -409,9 +409,15 @@ def push(root: Path, confirm: bool, authorize: bool) -> dict:
     if _run(["git", "status", "--porcelain"], root):
         raise ValueError("Hay cambios locales sin confirmar")
     _run(["gh", "auth", "status"], root)
-    visibility = json.loads(_run(["gh", "repo", "view", origin, "--json", "visibility"], root))
-    if visibility.get("visibility") != "PRIVATE":
-        raise ValueError("El repositorio grupal no se confirmó privado")
+    from publicacion_gem import identidad, GitHub
+    _, repo = identidad(root)
+    metadata = GitHub(root, repo).metadata()
+    if metadata.get("full_name") != repo or not metadata.get("permissions", {}).get("push"):
+        raise PermissionError("La cuenta autenticada no acredita escritura en el repositorio original")
+    if metadata.get("private") is False:
+        raise ValueError("El repositorio público está autorizado. Este cierre antiguo contiene evidencia académica legible; usa publicacion_gem.py para depositar sobres cifrados individuales, sin divulgar respuestas ni claves")
+    if metadata.get("private") is not True:
+        raise ValueError("No se confirmó la visibilidad del repositorio original")
     _run(["git", "push", "origin", branch], root)
     remote = _run(["git", "ls-remote", "origin", f"refs/heads/{branch}"], root).split()
     if not remote or remote[0] != sha:

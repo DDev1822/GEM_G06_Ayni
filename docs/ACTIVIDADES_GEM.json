@@ -1,0 +1,188 @@
+{
+  "P09.1": {
+    "titulo": "La decisión cambia con el estado de extracción",
+    "panel": "fig-cutoff",
+    "pregunta": "Si observas el mismo material antes y después de extraerlo, ¿por qué puede cambiar tu decisión de enviarlo a planta?",
+    "criterios": {
+      "estado_extraccion": "Distingue decidir extraer de decidir el destino de material ya extraído, aplicándolo a una observación del visor de su operación.",
+      "causa_economica": "Explica con sus palabras qué desembolso futuro se evita al no extraer y por qué ese mismo costo ya incurrido no vuelve a decidir el destino."
+    },
+    "limites": [
+      "Ejercicio didáctico posterior; no reconstruye una ley de corte utilizada históricamente en D01.",
+      "Nombrar costo hundido o copiar una cifra no demuestra su aplicación a la decisión."
+    ]
+  },
+  "P09.2": {
+    "titulo": "Costos relevantes para cada alternativa",
+    "panel": "cutofftext",
+    "pregunta": "¿Qué costos compararías para decidir entre procesar y botadero si el minado ya ocurrió, y cuáles cambiarían si todavía puedes no extraer?",
+    "criterios": {
+      "evitables_y_hundidos": "Identifica costos que cambian entre las alternativas observadas, distingue los ya incurridos y justifica su inclusión o exclusión.",
+      "opex_e_incremental": "Explica por qué el OPEX promedio histórico de S04 no reemplaza automáticamente los costos incrementales evitables de D08.",
+      "contraste_decisiones": "Aplica la comparación a las dos expresiones de Fórmula y contraste, incluyendo la alternativa de botadero para material ya extraído."
+    },
+    "limites": [
+      "No se vuelve a cargar el minado hundido al decidir el destino.",
+      "Los costos D08 son hipótesis docentes, no costos marginales inferidos del OPEX histórico."
+    ]
+  },
+  "P09.3": {
+    "titulo": "Dos umbrales condicionales por dominio",
+    "panel": "fig-cutoff",
+    "pregunta": "En un dominio del gráfico, ¿qué comparan las dos barras y por qué sus umbrales de ley no coinciden?",
+    "criterios": {
+      "lectura_visual": "Interpreta un dominio realmente presente, el eje de ley en % Cu y las dos series, distinguiendo procesar frente a botadero de extraer y procesar frente a no extraer.",
+      "diferencia_umbrales": "Justifica la diferencia observada mediante los costos relevantes de cada decisión, sin limitarse a repetir las alturas.",
+      "condicionalidad": "Explica por qué dominio, recuperación y supuestos económicos impiden aplicar un cutoff universal."
+    },
+    "limites": [
+      "Los umbrales S11 no acreditan clasificación mineral/desmonte histórica.",
+      "No inventar un segundo dominio en operaciones que solo tienen uno mineralizado."
+    ]
+  },
+  "P09.4": {
+    "titulo": "Sensibilidad con predicción y contraste",
+    "panel": "fig-cutoff",
+    "pregunta": "Antes de cambiar un solo control, ¿qué esperas que ocurra con ambos umbrales y cómo explicarías después el cambio que observas?",
+    "criterios": {
+      "precio": "En turnos distintos predice y contrasta el cambio de precio desde 6000 US$/t Cu a otro valor permitido, con rec=1 y cp=1; interpreta la dirección de ambos umbrales y una consecuencia gerencial.",
+      "recuperacion": "En turnos distintos predice y contrasta el cambio del factor rec desde 1 a otro valor permitido, con precio=6000 y cp=1; explica que la recuperación proxy cambia metal recuperable, no el precio ni la ley contenida, y reconoce el límite del proxy.",
+      "procesamiento": "En turnos distintos predice y contrasta el cambio del factor cp desde 1 a otro valor permitido, con precio=6000 y rec=1; interpreta la dirección de los umbrales y qué decisión podría cambiar."
+    },
+    "limites": [
+      "Trabajar precio, recuperación y procesamiento por separado, restableciendo los otros dos controles a su base.",
+      "Una predicción correcta no sustituye la observación posterior ni completa las otras sensibilidades.",
+      "Los controles S11 actualizan el gráfico de umbrales; no recalculan las tablas base de S12.",
+      "Precio didáctico D08 de 6000 US$/t Cu, distinto del supuesto T2 de la operación."
+    ]
+  },
+  "P09.5": {
+    "titulo": "Recomendación económica condicional",
+    "panel": "fig-cutoff",
+    "pregunta": "Con los escenarios que acabas de comparar, ¿qué recomendarías para este material y bajo qué supuestos mantendrías esa recomendación?",
+    "criterios": {
+      "recomendacion_sustentada": "Recomienda un destino o una política para un estado de extracción definido y vincula su razón a una observación real de los escenarios explorados.",
+      "condiciones_y_limites": "Explicita un supuesto económico y una limitación técnica que condicionan su recomendación; no convierte la regla didáctica en una decisión histórica."
+    },
+    "limites": [
+      "No imponer una recomendación única si el alumno sustenta una alternativa compatible con el escenario.",
+      "Una preferencia económica no demuestra acceso, capacidad ni factibilidad física."
+    ]
+  },
+  "P09.6": {
+    "titulo": "Defensa de la política de decisión",
+    "panel": "fig-cutoff",
+    "pregunta": "¿Cómo defenderías tu política ante el equipo y qué cambio concreto te haría revisarla?",
+    "criterios": {
+      "defensa": "Defiende su política comparando al menos dos cursos de acción mediante costos relevantes y consecuencias del escenario observado.",
+      "riesgo_y_revision": "Identifica un riesgo o incertidumbre y una condición concreta de cambio, explicando cómo alteraría la decisión."
+    },
+    "limites": [
+      "La política es provisional y condicional.",
+      "Completar S11 no ratifica D08 como dato oficial ni demuestra comprensión de S12."
+    ]
+  },
+  "P10.1": {
+    "titulo": "Interpretación del panorama sintético 3D",
+    "panel": "fig-3d",
+    "pregunta": "¿Qué puedes interpretar de la geometría y los dominios que ves, y qué faltaría para hablar de recursos o reservas?",
+    "criterios": {
+      "lectura_geometrica": "Interpreta una característica observada de la geometría o distribución de dominios de su operación y distingue el modelo de su representación visual.",
+      "naturaleza_sintetica": "Reconoce el universo sintético de 9408 bloques y explica por qué visualizar una envolvente no acredita recursos o reservas.",
+      "evidencia_faltante": "Identifica evidencia geológica o estudios que faltan antes de sostener una declaración de recursos o reservas."
+    },
+    "limites": [
+      "Malla 28 por 24 por 14; celdas 25 por 25 por 10 m.",
+      "Si aparece proyección 2D por falta de WebGL, registrar esa vista; no afirmar rotación 3D.",
+      "D01 es ancla descriptiva de mineral procesado, no estimación de ley in situ."
+    ]
+  },
+  "P10.2": {
+    "titulo": "Del tonelaje al ingreso de un bloque",
+    "panel": "block-detail",
+    "pregunta": "En el bloque que consultas, ¿cómo conectas toneladas, ley y recuperación con el metal recuperable y el ingreso, y por qué la ley sola no decide?",
+    "criterios": {
+      "atributos_y_metal": "Relaciona masa, ley en % Cu y recuperación proxy de un bloque real del grupo con metal contenido y recuperable; utiliza unidades coherentes.",
+      "pagabilidad_e_ingreso": "Distingue metal recuperable de pagable y explica la relación con precio, deducción comercial e ingreso neto mostrado.",
+      "interpretacion_economica": "Justifica por qué ley o ingreso por sí solos no determinan el valor neto ni el destino."
+    },
+    "limites": [
+      "S12 usa parámetros base D08; no hereda los controles de sensibilidad de S11.",
+      "Recuperación ausente impide inferir metal recuperable e ingreso; no reemplazarla por cero.",
+      "Distinguir toneladas de roca, toneladas de Cu y US$ por bloque."
+    ]
+  },
+  "P10.3": {
+    "titulo": "Valor del bloque antes y después de extraer",
+    "panel": "block-detail",
+    "pregunta": "Al comparar las dos tablas de este bloque, ¿qué alternativa recomendarías en cada estado de extracción y por qué puede cambiar?",
+    "criterios": {
+      "comparacion_escenarios": "Interpreta alternativas realmente mostradas en las dos tablas del mismo bloque y compara valores condicionales con sus unidades.",
+      "costos_por_estado": "Explica el costo de minado evitable antes de extraer y su carácter hundido después, aplicándolo a los resultados observados.",
+      "destino_condicional": "Sustenta el destino recomendado sin confundir mayor valor condicional con factibilidad; reconoce condiciones de almacenamiento cuando corresponda."
+    },
+    "limites": [
+      "No sumar resultados de dos estados mutuamente alternativos.",
+      "Stockpile tiene tiempo, espacio y remanejo simplificados; no equivale a un plan operativo."
+    ]
+  },
+  "P10.4": {
+    "titulo": "Bancos y distribución tonelaje-ley",
+    "panel": "fig-bank",
+    "pregunta": "¿Qué cambia entre el banco que exploras y la curva tonelaje-ley, y por qué un bloque o un banco no representan por sí solos todo el modelo?",
+    "criterios": {
+      "banco": "Interpreta una distribución de ley realmente observada en un banco e identifica qué subconjunto del modelo está mirando.",
+      "curva_tonelaje_ley": "Interpreta ambos ejes de fig-tonnage y explica cómo varía la masa por encima de un umbral descriptivo, sin llamarlo cutoff económico ni reservas.",
+      "cobertura": "Distingue los 9408 bloques del universo, la envolvente mineralizada usada en la curva y el encajonante; justifica por qué no extrapolar una muestra sin control."
+    },
+    "limites": [
+      "La curva tonelaje-ley excluye encajonante y es descriptiva.",
+      "El mapa de banco no acredita secuencia de extracción ni accesibilidad."
+    ]
+  },
+  "P10.5": {
+    "titulo": "Agregados económicos y material no evaluable",
+    "panel": "aggregate-summary",
+    "pregunta": "¿Qué conclusión permiten las dos tablas por destino y cómo tratarías el tonelaje sin evaluación económica al presentar una recomendación?",
+    "criterios": {
+      "lectura_agregados": "Interpreta destinos, tonelaje, ley, Cu pagable y valor condicional con sus unidades en las tablas del grupo, manteniendo separados los dos estados de extracción.",
+      "no_evaluables": "Explica por qué el material sin recuperación conserva tonelaje pero no tiene metal pagable ni valor asignable; no lo transforma en cero o botadero.",
+      "valor_y_van": "Distingue suma condicional de valores de bloques de VAN del proyecto y explica qué componentes o restricciones faltan para esa evaluación."
+    },
+    "limites": [
+      "Cada tabla cubre separadamente el universo de 9408 bloques; no se suman entre sí.",
+      "Valor pre-tax condicional no declara recursos, reservas, pit óptimo ni calendario factible.",
+      "Los agregados son del escenario base D08 precomputado, no de la sensibilidad S11."
+    ]
+  },
+  "P10.6": {
+    "titulo": "Recomendación provisional del modelo",
+    "panel": "block-detail",
+    "pregunta": "¿Qué recomendarías provisionalmente a partir del modelo y qué restricción todavía no representada podría invalidar tu recomendación?",
+    "criterios": {
+      "recomendacion_integrada": "Construye una recomendación provisional vinculando una observación del modelo y su interpretación económica, diferenciando resultado de hipótesis.",
+      "restricciones": "Explica al menos una restricción física u operacional concreta pendiente de S13 y cómo podría cambiar o impedir una decisión económicamente positiva.",
+      "condicion_de_revision": "Plantea qué evidencia adicional o cambio de supuesto justificaría revisar su recomendación, sin declarar aprobación académica."
+    },
+    "limites": [
+      "Faltan accesibilidad, precedencias, capacidades y secuencia; valor positivo no garantiza extracción ejecutable.",
+      "No afirmar reserva, pit óptimo o VAN por el mero resultado de valorización."
+    ]
+  },
+  "DECISION_FINAL": {
+    "titulo": "Decisión gerencial individual integradora",
+    "panel": "k10-economia-excel",
+    "pregunta": "Después del diagnóstico y de S11/S12, ¿qué recomendarías a la gerencia, frente a qué alternativa, con qué sustento y bajo qué condición revisarías tu consejo?",
+    "criterios": {
+      "diagnostico_y_alternativas": "Integra el diagnóstico operacional del Lab01 y compara alternativas identificables, sin presentar hipótesis de restricción como hechos demostrados.",
+      "sustento_economico": "Justifica la decisión con datos propios de la operación y unidades coherentes; distingue costos relevantes, CAPEX y resultados T2/R11 con su estado de verificación o derivación.",
+      "integracion_s11_s12": "Aplica los aprendizajes de costos y umbrales S11 y de valorización S12, distinguiendo ejercicio didáctico, historia del caso y valor condicional de bloques frente a VAN/TIR.",
+      "riesgo_y_cambio": "Explica limitaciones, un riesgo material y una condición de revisión, indicando qué evidencia faltante necesita la gerencia."
+    },
+    "limites": [
+      "Conservar la primera decisión Lab01 como antecedente; no reemplazarla ni atribuirle aprendizajes posteriores.",
+      "Una recomendación razonada no equivale a evaluación aprobada por el profesor.",
+      "La despedida documental requiere ZIP íntegro y confirmación remota de su sobre en el repositorio original del grupo."
+    ]
+  }
+}

@@ -269,6 +269,8 @@ def resume(root: Path, alias: str) -> dict:
     if result["indicadores_no_aplica"]:
         result["hecho_historico_cm03"] = EXPLANATION
         result["respuesta_estudiante_requerida_para_no_aplica"] = False
+    from continuidad_gem import reanudar as reanudar_gem
+    result["recorrido_gem"] = reanudar_gem(root, alias)
     return result
 
 

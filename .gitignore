@@ -3,3 +3,8 @@
 __pycache__/
 trabajos/
 *.tmp
+.gem_grupal/
+.gem_publicacion/
+.gem_recibos/
+.gem_claves/
+*.gem-key.json

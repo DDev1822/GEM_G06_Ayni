@@ -1,12 +1,12 @@
-# Laboratorio 01 v2 · G06 / Ayni Copper
+# Gerencia Minera GEM · G06 / Ayni Copper
 
-**Fecha de la actividad:** 11/11/2026. **Actualización de aula G06 CM-01 + CM-03:** 13/11/2026. D08/D09 son ejercicios sintéticos propuestos; no son resultados históricos de clasificación mineral/desmonte.
+**Candidata local del 14/11/2026.** Esta versión necesita aceptación docente antes de distribuirse. D08/D09 son ejercicios sintéticos propuestos, no una reproducción de la clasificación histórica mineral/desmonte.
 
-1. Descomprime todo el paquete. Abre `visor/G06_S11_S12_VISOR_INTERACTIVO.html` en el navegador; conserva juntos los dos HTML del visor para que funcione la pestaña **Estado Base y escenarios A/B/C** sin internet.
-2. En Copilot selecciona **Kai Gestión** y di: «Hola Kai, quiero empezar a llenar mi Excel». Kai pregunta tu alias y confirma G06. Si no puede crear tu copia, usa `INICIAR_LAB01_V2.cmd`. No necesitas programar.
-3. Tu copia queda en `trabajos/<alias>/2026-11-11/`. Verifica alias, grupo y operación en `00_MI_RUTA`. Con la guía y el registro automático de Kai, analiza los indicadores **1–12** de `01_DATOS_DEL_VISOR` utilizando su unidad y fuente. **Los indicadores 13 y 14 se registran automáticamente como NO APLICADO AL CASO HISTÓRICO**: el proyecto original recibió mineral y desmonte clasificados, sin utilizar leyes de corte. No escribas ni inventes valores de cutoff. Si falta un dato evaluable, distingue la ausencia documentada de cero.
-4. Responde tú las seis preguntas de `03_SEIS_PREGUNTAS` y defiende tu decisión en `04_MI_DECISION`. Kai acompaña y corrige; el profesor verifica y califica.
-5. Guarda el XLSX. Usa `EXPORTAR_MI_TRABAJO.cmd` para generar un ZIP individual verificable fuera del proyecto y envíaselo al representante. El ZIP conserva el Excel y tu ficha; no incluye el chat completo.
-6. Después el equipo debate, escribe seis respuestas **a mano**, transcribe el consenso en el Excel grupal y reúne los archivos para **un solo commit del grupo**.
+1. Descomprime el paquete completo y abre `visor/G06_S11_S12_VISOR_INTERACTIVO.html`. Conserva juntos los HTML del visor.
+2. En Copilot selecciona **Kai Gestión** y conversa con tu alias. Kai recupera el avance que ya exista y registra tus respuestas comprobadas en la copia individual. Si el laboratorio aún no comenzó y Kai no puede crear la copia, usa `INICIAR_LAB01_V2.cmd`.
+3. Completa el Laboratorio 01: indicadores **1–12**, seis preguntas y una primera decisión. Las filas 13 y 14 quedan **NO APLICADO AL CASO HISTÓRICO**. El cierre del laboratorio conserva ese avance, pero aún quedan etapas GEM.
+4. Continúa con **S11/P09.1–P09.6**, **S12/P10.1–P10.6** y una **decisión gerencial final**. Consulta el visor de **Ayni Copper**; predice e interpreta los cambios de sensibilidad con Kai. S11 es un ejercicio posterior y no explica retroactivamente la clasificación histórica.
+5. Cuando Kai confirme que el recorrido académico está completo, usa `EXPORTAR_RECORRIDO_GEM.cmd` o pide a Kai preparar la entrega. Se generan un ZIP académico **privado** y un sobre **cifrado**. `EXPORTAR_MI_TRABAJO.cmd` sigue siendo solo un respaldo parcial del Laboratorio 01.
+6. Entrega el sobre al operador que indique el docente y la clave **solo por el canal restringido** indicado. No subas el ZIP académico ni la clave a GitHub. La preparación local no equivale a entrega: Kai comprobará el recibo remoto antes de despedirse y dar paso a **Kai Integración GEM**.
 
-No pongas DNI, claves ni conversaciones completas en la carpeta. Si indicas a Kai que no guarde, trabajará solo en el chat. El tablero S04 muestra Base observada y A/B/C hipotéticos; el valor de bloques S12 no es VAN ni reserva. El precio, CAPEX, VAN y TIR de T2/R11 corresponden al modelo económico del proyecto y se diferencian de los supuestos didácticos S04/S11. No confundas un importe en MUS$ con el mismo número en US$.
+El equipo debatirá y confirmará sus seis respuestas, S11/S12 y la decisión colectiva. Kai Integración organiza las evidencias y el ZIP docente; el profesor evalúa. No compartas DNI, contraseñas ni conversaciones completas. Puedes pedir a Kai que no guarde; en ese caso el trabajo conversacional no queda como entrega documental.

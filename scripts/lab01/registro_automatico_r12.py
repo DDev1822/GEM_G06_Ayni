@@ -479,6 +479,9 @@ def indicador(root: Path, args) -> dict:
                 scenario = stated.group(1).upper()
                 period = stated_period.group()
     checked_value = value or old[key["D"]]
+    if number == 6 and args.estado == "comprendido":
+        from criterios_gem import validar_microdiagnostico
+        validar_microdiagnostico(interpretation or old[key["G"]])
     cell_unit = ""
     if number in (9, 10) and args.estado != "no_disponible" and re.match(r"\s*-?\d", checked_value):
         # Unidad de almacenamiento tomada de la plantilla individual real.
@@ -651,9 +654,8 @@ def decision(root: Path, args) -> dict:
             raise ValueError(f"La etapa pendiente es {_first_pending(state)}; no se puede cerrar decisión")
         future = cells(book, "04_MI_DECISION", list(DECISION_CELLS.values()))
         future[target] = response
-        missing = [label for label, cell in DECISION_CELLS.items() if not future[cell]]
-        if missing:
-            raise ValueError(f"Faltan componentes de la decisión: {', '.join(missing)}")
+        from criterios_gem import validar_decision
+        criteria = validar_decision(future, DECISION_CELLS, getattr(args, "evidencia_cierre", None))
     write(book, "04_MI_DECISION", {target: response}, corregir=args.corregir)
     if args.corregir:
         audit_correction(folder, state, stage=f"decision_{args.campo}", old=old, new={target: response})
@@ -663,9 +665,10 @@ def decision(root: Path, args) -> dict:
         if _first_pending(state) != "decision":
             raise ValueError(f"La etapa pendiente es {_first_pending(state)}; no se puede cerrar decisión")
         all_values = cells(book, "04_MI_DECISION", list(DECISION_CELLS.values()))
-        missing = [label for label, cell in DECISION_CELLS.items() if not all_values[cell]]
-        if missing:
-            raise ValueError(f"Faltan componentes de la decisión: {', '.join(missing)}")
+        # Ya se validó el texto candidato antes de escribir; releer confirma persistencia.
+        if criteria is not None:
+            from gem_integridad import atomico
+            atomico(folder / "decision_lab01_criterios.json", criteria)
         record(root, folder, "decision", "comprendido", response=all_values["C26"][:600], confirmed=True)
     return {"accion": "decision", "campo": args.campo, "celda": target,
             "cerrada": args.cerrar_decision, "proxima_actividad": _read_json(folder/"progreso.json")["proxima_actividad"],
@@ -685,8 +688,10 @@ def pausa(root: Path, args, *, finalizar: bool = False) -> dict:
             raise ValueError("No es posible cerrar: faltan KPI, preguntas o decisión en Excel")
         record(root, folder, "cierre", "comprendido", response="El alumno confirmó la finalización de su trabajo individual", confirmed=True)
         report = review(folder)
-    report["accion"] = "finalizar" if finalizar else "pausar"
-    report["nota"] = ("Guardar y cerrar el XLSX; después ejecutar EXPORTAR_MI_TRABAJO.cmd. La finalización no crea ni sube el ZIP."
+    from continuidad_gem import reanudar as reanudar_gem
+    report["recorrido_gem"] = reanudar_gem(root, args.alias)
+    report["accion"] = "finalizar_lab01" if finalizar else "pausar"
+    report["nota"] = ("Laboratorio 01 terminado. Continúa con S11/P09.1 en el mismo recorrido; aún faltan S12, decisión final y entrega verificada."
                      if finalizar else "Progreso local persistido. No equivale a cierre, entrega ni nota. Puede continuar con el mismo alias.")
     return report
 
@@ -717,6 +722,7 @@ def main() -> int:
     a.add_argument("--alias", required=True); a.add_argument("--campo", choices=list(DECISION_CELLS), required=True)
     a.add_argument("--texto", required=True); a.add_argument("--corregir", action="store_true")
     a.add_argument("--cerrar-decision", action="store_true");a.add_argument("--confirmado", action="store_true")
+    a.add_argument("--evidencia-cierre", type=Path, help="Mapa de extractos de una decisión integrada real")
     for name in ("pausar", "finalizar"):
         a = sub.add_parser(name, help="Comprueba avance y guarda sin perder pasos")
         a.add_argument("--alias", required=True)

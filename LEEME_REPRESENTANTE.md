@@ -1,15 +1,21 @@
-> **Actualización docente CM-03 (G06, 13/11/2026):** las filas 13 y 14 se registran como NO APLICA histórico, sin atribuir comprensión. Las fichas antiguas deben preservarse; las nuevas se procesan con el motor y cierre grupal actualizados. El repositorio G06 de clase ya existe y es público por decisión docente. No vuelvas a crear ni configurar un repositorio remoto.
+# Integración del grupo G06 · Ayni Copper
 
-# Cierre de G06 · un ZIP para el profesor y un commit grupal
+**Candidata local del 14/11/2026; requiere aceptación docente antes de uso con estudiantes.** El repositorio original `https://github.com/DDev1822/GEM_G06_Ayni.git` ya existe. Las respuestas individuales y el ZIP docente son privados.
 
-1. Cada estudiante guarda su Excel y ejecuta `EXPORTAR_MI_TRABAJO.cmd`; reúne todos los ZIP individuales por USB o carpeta compartida autorizada. Cada uno se importa por `CIERRE_GRUPAL.cmd` opción 1, que **no sobrescribe** sesiones ni mezcla grupos.
-2. El representante elige opción 2 (Preparar); crea el cierre con los Excel recibidos. Si llega otro estudiante después, importa (opción 1) e incorpora (opción 3). El cierre anterior no se borra.
-3. Completa el Excel grupal, fotografía/PDF las seis respuestas escritas **a mano** y agrega la evidencia a `cierre/2026-11-11/manuscrito/`; registra retroalimentación real de Kai y una captura del visor de G06 en sus carpetas. No inventes evidencias.
-4. Opción 4 (Revisar) informa si faltan respuestas, decisiones o fotos. Si está incompleto, entrega igual: el estado queda INCOMPLETA, no aprobado.
-5. Opción 5 crea un único ZIP docente **fuera del repositorio**, aun sin Git configurado y sin las seis respuestas. Incluye recibo con estado documental, pendientes, y SHA-256 al lado. Entrega este ZIP al profesor.
-6. **Solo cuando el docente lo autorice y el repositorio esté correctamente configurado**, y después de reunir las aportaciones del grupo, crea un único commit local con la opción 6, una sola vez. Para hacer un commit explícitamente INCOMPLETO se necesita `python scripts/lab01/cierre_grupal_v2.py commit --confirmar-representante --permitir-incompleta` con autorización del docente.
-7. Si hay commit, el representante puede generar el ZIP *después* para incluir el recibo con SHA; si ya existe, no se sobrescribe y se debe conservar el primer archivo. El push remoto es aparte y solo con autenticación/permiso, usando `python scripts/lab01/cierre_grupal_v2.py push --confirmar-representante --autorizar-envio`.
+Antes de la sesión, el responsable del laboratorio debe disponer de Python y ejecutar una vez `python -m pip install -r requirements-gem.txt` en un entorno autorizado; la exportación cifrada usa `cryptography` y los libros usan `openpyxl`. Verifica el visor local de **Ayni Copper** y el agente Copilot de este grupo antes de distribuir.
 
-**Situación actual de G06:** el docente ya publicó el repositorio; no ejecutes el asistente de creación de repositorios ni `publicar-inicial` sobre este `main`. El envío de aportaciones grupales requiere autorización docente y preservar las entregas existentes.
+## Incorporación individual controlada
 
-Un commit no garantiza push. Un ZIP íntegro no demuestra comprensión ni nota aprobatoria. Kai guía, el equipo responde y el profesor valida.
+Cada alumno termina Lab01, P09, P10 y su decisión final. Su exportación produce un ZIP académico privado, un sobre cifrado sin alias visible y una clave separada. El representante o docente reúne los sobres autorizados; la clave solo circula por el canal restringido que indique el docente. **No subas ZIP académicos, Excel, claves ni respuestas legibles al repositorio público.**
+
+La publicación en el GitHub original requiere política de entrega autorizada, cuenta con permisos propios y una orden expresa para el lote. El procedimiento de `docs/GUIA_CONTINUIDAD_GEM.md` autentica cada sobre y comprueba bytes, commit y SHA-256 remotos. Preparar un sobre, generar un commit local o recibir un ZIP por USB no confirma la incorporación. El viejo `CIERRE_GRUPAL.cmd` sigue siendo una herramienta histórica de cierre local; su ruta de push legible se bloquea para este repositorio público.
+
+## Deliberación y entrega al profesor
+
+1. Selecciona **Kai Integración GEM** en Copilot. Declara un padrón real de alias; un integrante que aún no entregó queda pendiente.
+2. Kai recibe sobres y claves restringidas con sus recibos, verifica grupo e integridad y compara las interpretaciones individuales sin decidir por ustedes. Una recepción local sin prueba de GitHub sigue pendiente de publicación.
+3. Discutan las **seis preguntas oficiales**, S11, S12 y la decisión colectiva. Cada integrante confirma explícitamente cada propuesta antes de fijar un acuerdo. Kai registra intervenciones reales; no inventa consenso ni suplanta a quien falta.
+4. Reúnan el manuscrito, retroalimentación basada en la deliberación y evidencia legible del visor de **Ayni Copper**. Kai prepara una **copia** del Excel grupal, el libro adicional S11/S12 y un ZIP docente restringido con recibo y pendientes.
+5. Entrega el ZIP docente al profesor por el canal restringido acordado. `COMPLETO` describe presencia y consistencia documental; el profesor decide pertinencia, autoría y calificación.
+
+Los comandos internos y las verificaciones están en `docs/GUIA_AGENTE_GRUPAL_GEM.md`. No reescribas las fuentes ni las respuestas de otros integrantes para completar una casilla.
