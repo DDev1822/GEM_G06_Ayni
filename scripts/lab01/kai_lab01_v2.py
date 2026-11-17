@@ -90,6 +90,31 @@ def edit_copy(path: Path, changes: dict[str, dict[str, str]], *,
                                 if n.attrib["r"] == row_number)
                 row_node.attrib.update({"ht": "110", "customHeight": "1"})
             updated[sheet_path] = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+        # La plantilla grupal contiene resultados de fórmulas precalculados.
+        # Después de escribir respuestas, esos valores ya no son válidos. Se
+        # invalidan sin tocar la fórmula y se pide recálculo al abrir en Excel.
+        if path.name.endswith("_GRUPAL.xlsx"):
+            for sheet_path in paths.values():
+                sheet_root = ET.fromstring(updated.get(sheet_path, source.read(sheet_path)))
+                changed = False
+                for cell in sheet_root.iter(f"{{{XML_MAIN}}}c"):
+                    if cell.find(f"{{{XML_MAIN}}}f") is None:
+                        continue
+                    if sheet_path == paths.get("00_EQUIPO") and cell.attrib.get("r") == "D6":
+                        continue  # Cache de identidad del grupo confirmada arriba.
+                    cached = cell.find(f"{{{XML_MAIN}}}v")
+                    if cached is not None:
+                        cell.remove(cached)
+                        changed = True
+                if changed:
+                    updated[sheet_path] = ET.tostring(sheet_root, encoding="utf-8", xml_declaration=True)
+            wb_path = "xl/workbook.xml"
+            workbook = ET.fromstring(source.read(wb_path))
+            calc = workbook.find(f"{{{XML_MAIN}}}calcPr")
+            if calc is None:
+                calc = ET.SubElement(workbook, f"{{{XML_MAIN}}}calcPr")
+            calc.attrib.update({"calcMode": "auto", "fullCalcOnLoad": "1", "forceFullCalc": "1"})
+            updated[wb_path] = ET.tostring(workbook, encoding="utf-8", xml_declaration=True)
         with zipfile.ZipFile(temp, "x") as target:
             for item in source.infolist():
                 target.writestr(copy(item), updated.get(item.filename, source.read(item.filename)))
@@ -99,7 +124,7 @@ def edit_copy(path: Path, changes: dict[str, dict[str, str]], *,
             for name in source.namelist():
                 if name not in updated and source.read(name) != target.read(name):
                     raise RuntimeError("Se modificó una parte del Excel ajena a la solicitud")
-                if name in updated:
+                if name in updated and name in paths.values():
                     before = [n.text for n in ET.fromstring(source.read(name)).iter(f"{{{XML_MAIN}}}f")]
                     after = [n.text for n in ET.fromstring(target.read(name)).iter(f"{{{XML_MAIN}}}f")]
                     if before != after:

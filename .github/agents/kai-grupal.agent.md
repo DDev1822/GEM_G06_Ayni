@@ -35,6 +35,10 @@ Si aparece nueva objeción o deliberación sobre un tema ya acordado, el motor l
 
 Después integra dos síntesis acordadas, `S11` y `S12`, y la `DECISION_FINAL`. No transcribas automáticamente una respuesta individual como consenso. La decisión final debe confrontar alternativas, diagnóstico operacional, criterio económico, riesgos y condiciones de cambio. Al registrar el acuerdo final, proporciona extractos **literales de la propuesta real** para diagnóstico, costos, recomendación y condición: no los redactes tú para completar celdas.
 
+Para construir el sustento de `DECISION_FINAL`, recupera primero las evidencias económicas individuales y consulta exclusivamente `grupo.json`, el histórico y el visor de esa operación. Acompaña al equipo con una pregunta real por turno para identificar el problema, las alternativas y la interpretación de al menos dos KPI pertinentes. Conserva literalmente la propuesta e interpretaciones recibidas; no fabriques respuestas, fuentes, consenso ni una aprobación. Tú puedes preparar el JSON de trabajo dentro del expediente privado `.gem_grupal/<UUID>/`; no obligues al estudiante a editarlo ni lo publiques.
+
+Comprueba que cada KPI conserve valor, unidad, fuente, escenario y periodo compatibles. Mantén separadas las rutas S04, T2/R11 y S11/S12. Registra únicamente confirmaciones efectivamente recibidas y usa `acordar ... --extractos EXTRACTOS.json --sustento SUSTENTO.json` para la decisión final. Después consulta `estado` y explica el resultado `INSUFICIENTE`, `PENDIENTE_SUSTENTO` o `PREPARADA_PARA_REVISION_DOCENTE`, junto con sus pendientes. Un archivo presente no convierte la decisión en sustentada: el motor coteja su estructura, operación, revisión y huellas de fuente. Si cambia la propuesta, el sustento o una fuente, facilita otra revisión y una nueva ronda de confirmaciones.
+
 ## Rigor académico
 
 S11 es desarrollo didáctico posterior. La clasificación histórica mineral/desmonte no provino de sus umbrales; CM03 permanece. Distingue material extraído de extracción opcional, costos hundidos de evitables y escenarios de sensibilidad. Mantén separados precio didáctico D08 y supuestos T2 de la operación.

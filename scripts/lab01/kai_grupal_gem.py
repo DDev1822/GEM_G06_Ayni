@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 import sys
 from typing import Iterator
 from uuid import UUID, uuid4
@@ -379,7 +380,8 @@ def intervenir(root: Path, expediente: str, *, alias: str, tema: str, turno_id: 
 
 
 def acordar(root: Path, expediente: str, *, tema: str, propuesta_id: str,
-            confirmaciones: list[str], extractos: dict[str, str] | None = None) -> dict:
+            confirmaciones: list[str], extractos: dict[str, str] | None = None,
+            sustento: dict | None = None) -> dict:
     if tema not in TOPICS:
         raise ValueError("Tema grupal inválido")
     with _locked(root, expediente) as (directory, state):
@@ -409,17 +411,27 @@ def acordar(root: Path, expediente: str, *, tema: str, propuesta_id: str,
             raise ValueError("Hubo deliberación posterior; confirmen de nuevo el texto acordado")
         selected = extractos or {}
         if tema == "DECISION_FINAL":
-            if set(selected) != set(DECISION_CELLS):
+            if selected and set(selected) != set(DECISION_CELLS):
                 raise ValueError("La decisión necesita extractos reales de diagnóstico, costos, recomendación y condición")
             selected = {key: _text(value, key) for key, value in selected.items()}
             if any(value not in proposal["texto"] for value in selected.values()):
                 raise ValueError("Los extractos de decisión deben aparecer literalmente en la propuesta real")
+            from sustento_gerencial_gem import calidad
+            quality = calidad(root, proposal["texto"], sustento)
         elif selected:
             raise ValueError("Los extractos estructurados se reservan para la decisión final")
+        elif sustento is not None:
+            raise ValueError("El sustento económico se reserva para la decisión final")
         agreement = {"tema": tema, "texto": proposal["texto"], "propuesta_id": propuesta_id,
                      "confirmaciones": confirmaciones, "participantes": accepted,
                      "extractos": selected, "fecha_utc": _now(),
                      "limite": "Acuerdo declarado por participantes; sin aprobación académica automática"}
+        if tema == "DECISION_FINAL":
+            quality["propuesta_id"] = propuesta_id
+            quality["revision_acuerdo"] = state["revision"] + 1
+            agreement["calidad_gerencial"] = quality
+            agreement["sustento"] = sustento
+            agreement["revision_acuerdo"] = state["revision"] + 1
         after = deepcopy(state)
         if tema in after["acuerdos"]:
             after["acuerdos_anteriores"].append(after["acuerdos"][tema])
@@ -506,19 +518,24 @@ def _report(root: Path, directory: Path, state: dict, *, verificar_red: bool) ->
         raise ValueError("Cambió la copia de las seis preguntas oficiales")
     academic = {alias: package["proyeccion"]["dimensiones"]["VERIFICACION_ACADEMICA"]
                 for alias, package in packages.items()}
+    from sustento_gerencial_gem import vigencia
+    decision = state["acuerdos"].get("DECISION_FINAL")
+    quality = vigencia(root, decision)
     return {"schema": "gem-grupal-estado/1", "expediente_id": state["expediente_id"],
             "grupo": state["grupo"], "operacion": state["operacion"], "revision": state["revision"],
             "estado_documental": "INCOMPLETO" if missing else "COMPLETO", "pendientes": missing,
             "integrantes_recibidos": list(packages), "padron_esperado": state["padron_esperado"],
             "acuerdos": list(state["acuerdos"]), "publicaciones": publications,
             "verificacion_individual": academic,
+            "calidad_gerencial": quality,
             "dimensiones": {"INTEGRIDAD_DOCUMENTAL": "INTEGRA" if not missing else "INCOMPLETA",
                            "COMPLETITUD_FORMATIVA": "COMPLETA" if len(packages)==len(state["padron_esperado"]) else "EN_CURSO",
                            "VERIFICACION_ACADEMICA": "PENDIENTE_DOCENTE",
                            "PUBLICACION_REMOTA": "VERIFICADA" if verificar_red and publications and all(
                                p.get("estado")=="PUBLICADO_GITHUB_VERIFICADO" for p in publications.values())
                                else "NO_VERIFICADA",
-                           "CALIFICACION_DOCENTE": "NO_EMITIDA"},
+                           "CALIFICACION_DOCENTE": "NO_EMITIDA",
+                           "CALIDAD_GERENCIAL": quality["estado"]},
             "red_reverificada_en_esta_consulta": verificar_red, "evaluacion_docente": "PENDIENTE",
             "limite": "Completitud e integridad documentales; no certifica autoría, comprensión, consenso semántico ni nota"}
 
@@ -556,10 +573,35 @@ def _workbooks(root: Path, directory: Path, state: dict, target: Path) -> tuple[
             edits.setdefault("02_6_RESPUESTAS", {})[f"D{n+6}"] = agreement["texto"]
     decision = state["acuerdos"].get("DECISION_FINAL")
     if decision:
-        edits["03_DECISION_FINAL"] = {cell: decision["extractos"][key] for key, cell in DECISION_CELLS.items()}
+        edits["03_DECISION_FINAL"] = {cell: decision["extractos"].get(key,"") for key, cell in DECISION_CELLS.items()}
     edit_copy(book, edits)
     if workbook_values(book, {sheet: list(cells) for sheet, cells in edits.items()}) != edits:
         raise RuntimeError("La lectura del Excel grupal no coincide con los acuerdos")
+    # En Windows con Excel, actualizar también los resultados almacenados.
+    # Sin Excel, edit_copy deja cachés vacíos y solicita recálculo al abrir.
+    recalculated = False
+    if os.name == "nt":
+        literal = str(book).replace("'", "''")
+        script = ("$e=$null;$w=$null;try{$e=New-Object -ComObject Excel.Application;"
+                  "$e.Visible=$false;$e.DisplayAlerts=$false;"
+                  f"$w=$e.Workbooks.Open('{literal}',0,$false);"
+                  "$e.CalculateFullRebuild();$w.Save();$w.Close($false);$w=$null}"
+                  "finally{if($w){$w.Close($false)};if($e){$e.Quit();"
+                  "[void][Runtime.InteropServices.Marshal]::ReleaseComObject($e)}}")
+        completed = subprocess.run(["powershell","-NoProfile","-NonInteractive","-Command",script],
+                                   capture_output=True,timeout=120,
+                                   creationflags=getattr(subprocess,"CREATE_NO_WINDOW",0))
+        if completed.returncode == 0:
+            from openpyxl import load_workbook
+            cached = load_workbook(book,read_only=True,data_only=True)
+            try:
+                count = sum(bool(cached["02_6_RESPUESTAS"][f"D{row}"].value) for row in range(7,13))
+                if (cached["05_ENTREGA_COMMIT"]["D28"].value != count or
+                    cached["05_ENTREGA_COMMIT"]["D29"].value !=
+                    ("REGISTRADA" if cached["03_DECISION_FINAL"]["D26"].value else "PENDIENTE")):
+                    raise RuntimeError("Excel devolvió valores calculados incoherentes")
+            finally: cached.close()
+            recalculated = True
     if _sha(master.read_bytes()) != master_hash:
         raise RuntimeError("La plantilla maestra cambió")
     # Este libro nuevo evita alterar la estructura de la plantilla histórica.
@@ -628,6 +670,30 @@ def _workbooks(root: Path, directory: Path, state: dict, target: Path) -> tuple[
     for column in "ABCDEFG":
         roster.column_dimensions[column].width = 42
     roster.freeze_panes = "A2"
+    from sustento_gerencial_gem import vigencia
+    decision = state["acuerdos"].get("DECISION_FINAL")
+    quality = vigencia(root, decision)
+    evidence = integration.create_sheet("SUSTENTO_ECONOMICO")
+    evidence.append(["CALIDAD_GERENCIAL",quality["estado"]])
+    evidence.append(["Límite","Cotejo documental de fuente; revisión conceptual y nota reservadas al docente"])
+    evidence.append(["Cálculo Excel","RECALCULADO_Y_COTEJADO" if recalculated else "REQUIERE_RECALCULO_AL_ABRIR; cachés no verificados"])
+    evidence.append(["Propuesta vigente",decision["propuesta_id"] if decision else "PENDIENTE"])
+    evidence.append(["Ruta",quality.get("ruta","PENDIENTE_SUSTENTO")])
+    support = decision.get("sustento") if decision else None
+    for label,key in (("Problema","problema"),("Alternativas","alternativas"),("Comparación","comparacion"),
+                      ("Restricciones","restricciones"),("Recomendación","recomendacion"),("Condición de cambio","condicion")):
+        evidence.append([label,support.get(key,"PENDIENTE_SUSTENTO") if support else "PENDIENTE_SUSTENTO"])
+    evidence.append(["Huellas de fuentes",str(quality.get("fuentes_sha256",{}))])
+    evidence.append(["Indicador","Valor declarado","Valor fuente","Unidad","Fuente exacta","Escenario","Periodo","Estado fuente","Interpretación del equipo","Limitación"])
+    for item in quality["kpi"]:
+        evidence.append([item["codigo"],str(item["valor"]),item["valor_fuente"],item["unidad"],
+            item["fuente"],item["escenario"],item["periodo"],item["estado_fuente"],
+            item["interpretacion"],item["limite"]])
+    for col in "ABCDEFGHIJ": evidence.column_dimensions[col].width = 30 if col not in "EIJ" else 65
+    for row in evidence:
+        for cell in row:
+            cell.alignment = Alignment(wrap_text=True, vertical="top")
+    evidence.freeze_panes = "A13"
     extra = target / "INTEGRACION_S11_S12.xlsx"
     integration.save(extra)
     return book, extra
@@ -649,6 +715,7 @@ def _human(state: dict, report: dict) -> bytes:
              f"Expediente: {state['expediente_id']}", f"Estado documental: {report['estado_documental']}",
              "Verificación académica: PENDIENTE_DOCENTE; calificación: NO_EMITIDA.",
              "Entrega restringida al equipo y docente. Sin nota ni aprobación automática.", "",
+             "Calidad gerencial documental: " + report["calidad_gerencial"]["estado"],
              "## Pendientes", ""]
     lines.extend([f"- {item}" for item in report["pendientes"]] or ["Sin pendientes documentales detectados."])
     lines.extend(["", "## Acuerdos reales registrados", ""])
@@ -686,7 +753,12 @@ def exportar_docente(root: Path, expediente: str, salida: Path | None = None) ->
             raise ValueError("El ZIP docente con respuestas privadas debe permanecer en el expediente o fuera del repositorio")
         if output.exists() or output.with_suffix(output.suffix + ".sha256").exists():
             raise FileExistsError("Ya existe el ZIP docente o su recibo SHA-256; no se sobrescribe")
-        files = {"ESTADO_GRUPAL.json": _json(state), "ESTADO_DOCUMENTAL.json": _json(report),
+        exported_state = deepcopy(state)
+        if "DECISION_FINAL" in exported_state["acuerdos"]:
+            current = exported_state["acuerdos"]["DECISION_FINAL"]
+            current["calidad_gerencial_registrada"] = current.get("calidad_gerencial")
+            current["calidad_gerencial"] = report["calidad_gerencial"]
+        files = {"ESTADO_GRUPAL.json": _json(exported_state), "ESTADO_DOCUMENTAL.json": _json(report),
                  "INFORME_GRUPAL.md": _human(state, report), book.name: book.read_bytes(),
                  extra.name: extra.read_bytes(), "fuentes/PREGUNTAS_LAB01_V2.md":
                  _source(directory, "fuentes/PREGUNTAS_LAB01_V2.md").read_bytes()}
@@ -752,6 +824,7 @@ def main() -> int:
             command.add_argument("--propuesta-id", required=True)
             command.add_argument("--confirmaciones", nargs="+", required=True)
             command.add_argument("--extractos", type=Path, help="JSON de extractos literales para decisión final")
+            command.add_argument("--sustento", type=Path, help="JSON privado de sustento económico para decisión final")
         elif name == "adjuntar":
             command.add_argument("--tipo", choices=ATTACHMENT_TYPES, required=True)
             command.add_argument("--archivo", type=Path, required=True)
@@ -775,7 +848,8 @@ def main() -> int:
                                 texto=args.texto, tipo=args.tipo, propuesta_id=args.propuesta_id)
         elif args.cmd == "acordar":
             result = acordar(root, args.expediente, tema=args.tema, propuesta_id=args.propuesta_id,
-                             confirmaciones=args.confirmaciones, extractos=_read(args.extractos) if args.extractos else None)
+                             confirmaciones=args.confirmaciones, extractos=_read(args.extractos) if args.extractos else None,
+                             sustento=_read(args.sustento) if args.sustento else None)
         elif args.cmd == "adjuntar":
             result = adjuntar(root, args.expediente, tipo=args.tipo, archivo=args.archivo, descripcion=args.descripcion)
         elif args.cmd == "preparar":
